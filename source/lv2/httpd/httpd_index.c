@@ -26,6 +26,7 @@ unsigned char dvdkey[0x10];
 // Store Console Type and Temperatures
 char console_type[20];
 char temperature_info[50];
+char fuse_info[256];  // Buffer to store fuse data
 
 struct response_mem_priv_s {
     void *base;
@@ -92,6 +93,9 @@ int response_index_process_request(struct http_state *http, const char *method, 
     // Fetch Console Type & Temperatures
     strcpy(console_type, get_console_type());
     get_temperatures();
+
+    // Fetch Fuse Data
+    get_fuse_data(fuse_info);
 
     priv->hdr_state = 0;
     priv->ptr = 0;
@@ -161,6 +165,9 @@ int response_index_do_data(struct http_state *http) {
         else if (strcmp((char *)INDEX_HTML[i], "TEMP_INFO") == 0) {
             sprintf(buffer, "%s", temperature_info);
         }
+        else if (strcmp((char *)INDEX_HTML[i], "FUSE_INFO") == 0) {  // 🔥 Added this
+            sprintf(buffer, "%s", fuse_info);
+        }
         else {
             sprintf(buffer, "%s", INDEX_HTML[i]);
         }
@@ -181,4 +188,16 @@ int response_index_do_data(struct http_state *http) {
 void response_index_finish(struct http_state *http) {
     struct response_mem_priv_s *priv = http->response_priv;
     mem_free(priv);
+}
+
+void get_fuse_data(char *buffer) {
+    FILE *fuse_file = fopen("/fuses.txt", "r");
+    if (!fuse_file) {
+        sprintf(buffer, "Fuses not available");
+        return;
+    }
+
+    fread(buffer, 1, 255, fuse_file);
+    buffer[255] = '\0'; // Null-terminate the buffer
+    fclose(fuse_file);
 }
