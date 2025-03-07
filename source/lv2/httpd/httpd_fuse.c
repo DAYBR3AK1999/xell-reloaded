@@ -20,7 +20,6 @@
 
 #include "httpd.h"
 #include "httpd_fuse.h"
-#include "xenon_smc.h"
 
 struct response_fuse_priv_s
 {
