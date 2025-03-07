@@ -71,13 +71,18 @@ char *INDEX_HTML[] = {
     "<div class=\"box\">",
     "<h2>Console Information</h2>",
     "<p><b>Console Type:</b> CONSOLE_TYPE</p>",
-    "<p><b>Temperature:</b> TEMPERATURE_INFO</p>",
+    "<p><b>Temperature:</b> TEMP_INFO</p>",
     "</div>",
 
     "<div class=\"box\">",
     "<h2>Keys</h2>",
     "<p><b>CPU Key:</b> CPU_KEY</p>",
     "<p><b>DVD Key:</b> DVD_KEY</p>",
+    "</div>",
+
+    "<div class=\"box\">",
+    "<h2>Fuses</h2>",
+    "<p><b>Fuses:</b> FUSE_INFO</p>",
     "</div>",
 
     "<div class=\"box\">",
