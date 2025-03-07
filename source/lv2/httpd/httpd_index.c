@@ -11,7 +11,6 @@
 #include <lwip/tcp.h>
 #include <xenon_soc/xenon_io.h>
 #include <xenon_smc/xenon_smc.h>
-#include "xenon_smc.h"
 #include <xenon_soc/xenon_secotp.h>
 #include <network/network.h>
 #include <xb360/xb360.h>
