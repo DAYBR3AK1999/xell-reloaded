@@ -92,7 +92,7 @@ int response_index_process_request(struct http_state *http, const char *method, 
 
     // Fetch Console Type & Temperatures
     strcpy(console_type, get_console_type());
-    get_temperatures();
+    get_temperatures(temperature_info);
 
     // Fetch Fuse Data
     get_fuse_data(fuse_info);
