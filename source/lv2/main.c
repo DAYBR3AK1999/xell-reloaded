@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <console/console.h>  // Fix for CONSOLE_COLOR_CYAN
-#include <xenon_smc/xenon_smc.h> // Fix for xenon_smc_read_temp
-#include "xenon_smc.h"
+#include <xenon_smc/xenon_smc.h>
 
 #include <debug.h>
 #include <xenos/xenos.h>
