@@ -38,235 +38,221 @@
 void do_asciiart() {
     char *p = asciiart;
     while (*p)
-	    console_putch(*p++);
+        console_putch(*p++);
     printf(asciitail);
 }
 
 void dumpana() {
     int i;
-    for (i = 0; i < 0x100; ++i)
-    {
-	    uint32_t v;
-	    xenon_smc_ana_read(i, &v);
-	    printf("0x%08x, ", (unsigned int)v);
-	    if ((i&0x7)==0x7)
-		    printf(" // %02x\n", (unsigned int)(i &~0x7));
+    for (i = 0; i < 0x100; ++i) {
+        uint32_t v;
+        xenon_smc_ana_read(i, &v);
+        printf("0x%08x, ", (unsigned int)v);
+        if ((i & 0x7) == 0x7)
+            printf(" // %02x\n", (unsigned int)(i & ~0x7));
     }
 }
 
-char FUSES[350]; /* this string stores the ascii dump of the fuses */
-char CBLDV[17]; // 16 + terminate
+void print_temperatures() {
+    uint8_t cpu_temp, gpu_temp, edram_temp;
+    
+    xenon_smc_read_temp(0, &cpu_temp);
+    xenon_smc_read_temp(1, &gpu_temp);
+    xenon_smc_read_temp(2, &edram_temp);
+    
+    printf("\n====================\n");
+    printf(" * Console Temperatures:\n");
+    printf("   - CPU:   %d°C\n", cpu_temp);
+    printf("   - GPU:   %d°C\n", gpu_temp);
+    printf("   - EDRAM: %d°C\n", edram_temp);
+    printf("====================\n");
+}
+
+void print_uptime() {
+    uint64_t tb = mftb(); 
+    uint64_t seconds = tb / 50000000; 
+
+    uint32_t hours = seconds / 3600;
+    uint32_t minutes = (seconds % 3600) / 60;
+    uint32_t sec = seconds % 60;
+
+    printf("\n====================\n");
+    printf(" * System Uptime: %02d:%02d:%02d\n", hours, minutes, sec);
+    printf("====================\n");
+}
+
+// Store fuse data
+char FUSES[350];
+char CBLDV[17]; 
 char FGLDV[80];
 int cbldvcount;
 int fgldvcount;
 
 unsigned char stacks[6][0x10000];
 
-void reset_timebase_task()
-{
-    mtspr(284,0); // TBLW
-    mtspr(285,0); // TBUW
-    mtspr(284,0);
+void reset_timebase_task() {
+    mtspr(284, 0); 
+    mtspr(285, 0); 
+    mtspr(284, 0);
 }
 
-void synchronize_timebases()
-{
+void synchronize_timebases() {
     xenon_thread_startup();
     
-    std((void*)0x200611a0,0); // stop timebase
-    
+    std((void*)0x200611a0, 0);
+
     int i;
-    for(i=1;i<6;++i){
-	    xenon_run_thread_task(i,&stacks[i][0xff00],(void *)reset_timebase_task);
-	    while(xenon_is_thread_task_running(i));
+    for (i = 1; i < 6; ++i) {
+        xenon_run_thread_task(i, &stacks[i][0xff00], (void *)reset_timebase_task);
+        while (xenon_is_thread_task_running(i));
     }
-    
-    reset_timebase_task(); // don't forget thread 0
-		    
-    std((void*)0x200611a0,0x1ff); // restart timebase
+
+    reset_timebase_task(); 
+    std((void*)0x200611a0, 0x1ff);
 }
-    
-int main(){
+
+int main() {
     LogInit();
     int i;
 
-    printf("ANA Dump before Init:\n");
+    printf("\n====================\n");
+    printf("  ANA Dump Before Init\n");
+    printf("====================\n");
     dumpana();
 
-    // linux needs this
     synchronize_timebases();
-    
-    // irqs preinit (SMC related)
+
     *(volatile uint32_t*)0xea00106c = 0x1000000;
     *(volatile uint32_t*)0xea001064 = 0x10;
     *(volatile uint32_t*)0xea00105c = 0xc000000;
 
     xenon_smc_start_bootanim();
 
-    // flush console after each outputted char
-    setbuf(stdout,NULL);
+    setbuf(stdout, NULL);
 
     xenos_init(VIDEO_MODE_AUTO);
 
-    printf("ANA Dump after Init:\n");
+    printf("\n====================\n");
+    printf("  ANA Dump After Init\n");
+    printf("====================\n");
     dumpana();
 
-#ifdef SWIZZY_THEME
-    console_set_colors(CONSOLE_COLOR_BLACK,CONSOLE_COLOR_ORANGE); // Orange text on black bg
+#ifdef HEXAMODS_THEME
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_CYAN);
+#elif defined SWIZZY_THEME
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_ORANGE); 
 #elif defined XTUDO_THEME
-    console_set_colors(CONSOLE_COLOR_BLACK,CONSOLE_COLOR_PINK); // Pink text on black bg
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_PINK);
 #elif defined DEFAULT_THEME
-    console_set_colors(CONSOLE_COLOR_BLUE,CONSOLE_COLOR_WHITE); // White text on blue bg
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_CYAN); 
 #else
-    console_set_colors(CONSOLE_COLOR_BLACK,CONSOLE_COLOR_GREEN); // Green text on black bg
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_GREEN);
 #endif
+
     console_init();
 
-    printf("\nXeLL RELOADED - Xenon Linux Loader 2nd Stage " LONGVERSION "\n");
-    //printf("\nBuilt with GCC " GCC_VERSION " and Binutils " BINUTILS_VERSION " \n"); // User doesn't need to know this
+    printf("\n=====================================\n");
+    printf("        XeLL RELOADED - HexaMods     \n");
+    printf("=====================================\n\n");
+
     do_asciiart();
 
-    //delay(3); //give the user a chance to see our splash screen <- network init should last long enough...
-    
     xenon_sound_init();
     xenon_make_it_faster(XENON_SPEED_FULL);
 
-    if (xenon_get_console_type() != REV_CORONA_PHISON) //Not needed for MMC type of consoles! ;)
-    {
-	    printf(" * nand init\n");
-	    sfcx_init();
-	    if (sfc.initialized != SFCX_INITIALIZED)
-	    {
-		    printf(" ! sfcx initialization failure\n");
-		    printf(" ! nand related features will not be available\n");
-		    delay(5);
-	    }
+    if (xenon_get_console_type() != REV_CORONA_PHISON) {
+        printf(" * NAND Init\n");
+        sfcx_init();
+        if (sfc.initialized != SFCX_INITIALIZED) {
+            printf(" ! SFCX initialization failure\n");
+            printf(" ! NAND features unavailable\n");
+            delay(5);
+        }
     }
 
     xenon_config_init();
 
 #ifndef NO_NETWORKING
-
-    printf(" * network init\n");
+    printf(" * Network Init\n");
     network_init();
-
-    printf(" * starting httpd server...");
+    printf(" * Starting HTTP Server... Success\n");
     httpd_start();
-    printf("success\n");
 #endif
 
-    printf(" * usb init\n");
+    printf(" * USB Init\n");
     usb_init();
     usb_do_poll();
 
-    printf(" * sata hdd init\n");
+    printf(" * SATA HDD Init\n");
     xenon_ata_init();
 
 #ifndef NO_DVD
-    printf(" * sata dvd init\n");
+    printf(" * SATA DVD Init\n");
     xenon_atapi_init();
 #endif
 
     mount_all_devices();
-    /*int device_list_size = */ findDevices();
+    findDevices();
 
     console_clrscr();
-    printf(" ______________________________________\n|                                      |\n|  XeLL RELOADED - Xenon Linux Loader  |\n|______________________________________|\n"); // Fancy
-    
+
+    network_print_config(); // ✅ Always display IP address
+    print_temperatures();
+    print_uptime();
+
 #ifndef NO_PRINT_CONFIG
-    printf("\n * FUSES - write them down and keep them safe:\n");
+    printf("\n====================\n");
+    printf(" * FUSES - Save this info safely:\n");
+    printf("====================\n");
+
     char *fusestr = FUSES;
     char *cbldvstr = CBLDV;
     char *fgldvstr = FGLDV;
-    
-    for (i = 0; i < 12; ++i){
-	    u64 line;
-	    unsigned int hi,lo;
-	    
-	    line = xenon_secotp_read_line(i);
-	    hi=line >> 32;
-	    lo=line & 0xffffffff;
 
-	    fusestr += sprintf(fusestr, "fuseset %02d: %08x%08x\n", i, hi, lo);
+    for (i = 0; i < 12; ++i) {
+        u64 line;
+        unsigned int hi, lo;
+        
+        line = xenon_secotp_read_line(i);
+        hi = line >> 32;
+        lo = line & 0xffffffff;
 
-	    if (i >= 7) {
-		    fgldvstr += sprintf(fgldvstr, "%08x%08x", hi, lo) + '\0';
-	    }
-        if (i == 2) {
-            cbldvstr += sprintf(cbldvstr, "%08x%08x", hi, lo);
-        }
-
+        fusestr += sprintf(fusestr, "fuseset %02d: %08x%08x\n", i, hi, lo);
     }
 
-    for (i = 0; CBLDV[i] != '\0' ; ++i) {
-        if ('f' == CBLDV[i]) {
-            cbldvcount = i + 1;
-        }
-    }
-
-    
-    for (i = 0; FGLDV[i] != '\0'; ++i) {
-	    if ('f' == FGLDV[i]) {
-		    ++fgldvcount;
-	    }
-    }
-    
     printf(FUSES);
-    
+
     print_cpu_dvd_keys();
     print_serials();
-    
+
     printf(" * CPU PVR: %08x\n", mfspr(287));
-    
-    if (xenon_get_console_type() == 0) {
-	    printf(" * Console: Xenon\n");
-    } else if (xenon_get_console_type() == 1) {
-	    printf(" * Console: Xenon/Zephyr\n");
-    } else if (xenon_get_console_type() == 2) {
-	    printf(" * Console: Falcon\n");
-    } else if (xenon_get_console_type() == 3) {
-	    printf(" * Console: Jasper\n");
-    } else if (xenon_get_console_type() == 4) {
-	    printf(" * Console: Trinity\n");
-    } else if (xenon_get_console_type() == 5) {
-	    printf(" * Console: Corona\n");
-    } else if (xenon_get_console_type() == 6) {
-	    printf(" * Console: Corona MMC\n");
-    } else if (xenon_get_console_type() == 7) {
-	    printf(" * Console: Winchester - how did you get here???\n");
-    } else if (xenon_get_console_type() == -1) {
-	    printf(" * Console: Unknown\n");
+
+    switch (xenon_get_console_type()) {
+        case 0: printf(" * Console: Xenon\n"); break;
+        case 1: printf(" * Console: Xenon/Zephyr\n"); break;
+        case 2: printf(" * Console: Falcon\n"); break;
+        case 3: printf(" * Console: Jasper\n"); break;
+        case 4: printf(" * Console: Trinity\n"); break;
+        case 5: printf(" * Console: Corona\n"); break;
+        case 6: printf(" * Console: Corona MMC\n"); break;
+        case 7: printf(" * Console: Winchester (Impossible)\n"); break;
+        default: printf(" * Console: Unknown\n"); break;
     }
-    
+
     printf(" * 2BL LDV: %d\n", cbldvcount);
     printf(" * 6BL LDV: %d\n", fgldvcount);
-    
-    network_print_config();
 #endif
-    /* Stop logging and save it to first USB Device found that is writeable */
-    LogDeInit();
-    //extern char device_list[STD_MAX][10];
 
-    //for (i = 0; i < device_list_size; i++)
-    //{
-    //	if (strncmp(device_list[i], "ud", 2) == 0)
-    //	{
-    //		char tmp[STD_MAX + 8];
-    //		sprintf(tmp, "%sxell.log", device_list[i]);
-    //		if (LogWriteFile(tmp) == 0)
-    //			i = device_list_size;
-    //	}
-    //}
-    
-    mount_all_devices();
-    printf("\n * Looking for files on local media and TFTP...\n\n");
-    for(;;){
-	    fileloop();
-	    tftp_loop(); //less likely to find something...
-	    console_clrline();
-	    usb_do_poll(); // Refresh USB
+    LogDeInit();
+
+    printf("\n * Searching for files on local storage and TFTP...\n\n");
+
+    for (;;) {
+        fileloop();
+        tftp_loop();
+        console_clrline();
+        usb_do_poll();
     }
 
     return 0;
 }
-
