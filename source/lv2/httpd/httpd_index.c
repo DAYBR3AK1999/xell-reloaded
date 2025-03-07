@@ -189,31 +189,3 @@ void response_index_finish(struct http_state *http) {
     struct response_mem_priv_s *priv = http->response_priv;
     mem_free(priv);
 }
-
-void get_fuse_data(char *buffer) {
-    uint64_t fuses[12]; // 12 fuse lines max on Xbox 360
-    memset(fuses, 0, sizeof(fuses));
-    
-    // Read fuses from hardware
-    for (int i = 0; i < 12; i++) {
-        fuses[i] = xenon_secotp_read_line(i);
-    }
-
-    // Format fuse data into a readable string
-    sprintf(buffer, 
-        "Fuse Lines:\n"
-        "L00: %016llX\n"
-        "L01: %016llX\n"
-        "L02: %016llX\n"
-        "L03: %016llX\n"
-        "L04: %016llX\n"
-        "L05: %016llX\n"
-        "L06: %016llX\n"
-        "L07: %016llX\n"
-        "L08: %016llX\n"
-        "L09: %016llX\n"
-        "L10: %016llX\n"
-        "L11: %016llX\n",
-        fuses[0], fuses[1], fuses[2], fuses[3], fuses[4], fuses[5],
-        fuses[6], fuses[7], fuses[8], fuses[9], fuses[10], fuses[11]);
-}
