@@ -61,5 +61,5 @@ struct http_state
 	void *response_priv;
 };
 
-
+void get_fuse_data(char *buffer);
 #endif
