@@ -57,7 +57,7 @@ const char* get_console_type() {
  * Retrieve Console Temperatures (CPU, GPU, EDRAM)
  */
 void get_temperatures(char *buffer) {
-    uint8_t cpu_temp, gpu_temp, edram_temp;
+    uint32_t cpu_temp, gpu_temp, edram_temp;
 
     xenon_smc_ana_read(0, &cpu_temp);
     xenon_smc_ana_read(1, &gpu_temp);
