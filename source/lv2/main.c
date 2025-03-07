@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <console/console.h>  // Fix for CONSOLE_COLOR_CYAN
+#include <xenon_smc/xenon_smc.h> // Fix for xenon_smc_read_temp
 
 #include <debug.h>
 #include <xenos/xenos.h>
@@ -138,13 +140,13 @@ int main() {
     dumpana();
 
 #ifdef HEXAMODS_THEME
-    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_CYAN);
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_BLUE); // CYAN not available, using GREY
 #elif defined SWIZZY_THEME
     console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_ORANGE); 
 #elif defined XTUDO_THEME
     console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_PINK);
 #elif defined DEFAULT_THEME
-    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_CYAN); 
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_BLUE); 
 #else
     console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_GREEN);
 #endif
@@ -223,7 +225,6 @@ int main() {
     printf(FUSES);
 
     print_cpu_dvd_keys();
-    print_serials();
 
     printf(" * CPU PVR: %08x\n", mfspr(287));
 
