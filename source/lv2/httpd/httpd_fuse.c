@@ -210,3 +210,13 @@ void response_fuse_finish(struct http_state *http)
 	mem_free(priv->data);
 	mem_free(priv);
 }
+
+void get_fuse_data(char *buffer) {
+    FILE *fuse_file = fopen("/fuses.txt", "r");
+    if (!fuse_file) {
+        sprintf(buffer, "Fuses not available");
+        return;
+    }
+    fread(buffer, 1, 256, fuse_file);
+    fclose(fuse_file);
+}
