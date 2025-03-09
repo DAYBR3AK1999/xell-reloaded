@@ -56,12 +56,12 @@ void dumpana() {
 }
 
 void print_temperatures() {
-    uint8_t cpu_temp, gpu_temp, edram_temp;
-    
-    xenon_smc_ana_read(0, &cpu_temp);
-    xenon_smc_ana_read(1, &gpu_temp);
-    xenon_smc_ana_read(2, &edram_temp);
-    
+    uint32_t cpu_temp, gpu_temp, edram_temp;
+
+    xenon_smc_read_temp(0, &cpu_temp);
+    xenon_smc_read_temp(1, &gpu_temp);
+    xenon_smc_read_temp(2, &edram_temp);
+
     printf("\n====================\n");
     printf(" * Console Temperatures:\n");
     printf("   - CPU:   %d°C\n", cpu_temp);
@@ -74,12 +74,13 @@ void print_uptime() {
     uint64_t tb = mftb(); 
     uint64_t seconds = tb / 50000000; 
 
-    uint32_t hours = seconds / 3600;
+    uint32_t days = seconds / 86400;
+    uint32_t hours = (seconds % 86400) / 3600;
     uint32_t minutes = (seconds % 3600) / 60;
     uint32_t sec = seconds % 60;
 
     printf("\n====================\n");
-    printf(" * System Uptime: %02d:%02d:%02d\n", hours, minutes, sec);
+    printf(" * System Uptime: %d days, %02d:%02d:%02d\n", days, hours, minutes, sec);
     printf("====================\n");
 }
 
@@ -140,11 +141,15 @@ int main() {
     dumpana();
 
 #ifdef HEXAMODS_THEME
-    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_BLUE); // CYAN not available, using GREY
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_BLUE);
 #elif defined SWIZZY_THEME
     console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_ORANGE); 
 #elif defined XTUDO_THEME
     console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_PINK);
+#elif defined DARK_THEME
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_GREY);  // ✅ Added GREY
+#elif defined ALERT_THEME
+    console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_RED);   // ✅ Added RED
 #elif defined DEFAULT_THEME
     console_set_colors(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_BLUE); 
 #else
@@ -177,6 +182,11 @@ int main() {
 #ifndef NO_NETWORKING
     printf(" * Network Init\n");
     network_init();
+    
+    char ip_address[16];
+    snprintf(ip_address, sizeof(ip_address), "%s", network_get_ip());
+    
+    printf(" * Assigned IP: %s\n", ip_address);  // ✅ Print IP Address
     printf(" * Starting HTTP Server... Success\n");
     httpd_start();
 #endif
