@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <console/console.h>  // Fix for CONSOLE_COLOR_CYAN
+#include <console/console.h>  
 #include <xenon_smc/xenon_smc.h>
 
 #include <debug.h>
@@ -34,7 +34,6 @@
 #include "config.h"
 #include "file.h"
 #include "tftp/tftp.h"
-
 #include "log.h"
 
 void do_asciiart() {
@@ -167,11 +166,9 @@ int main() {
 #ifndef NO_NETWORKING
     printf(" * Network Init\n");
     network_init();
-    
-    char ip_address[16];
-    snprintf(ip_address, sizeof(ip_address), "%s", network_get_ip());
-    
-    printf(" * Assigned IP: %s\n", ip_address);  // ✅ Print IP Address
+
+    printf(" * Assigned Network Config:\n");
+    network_print_config();  // ✅ This will display IP settings.
     printf(" * Starting HTTP Server... Success\n");
     httpd_start();
 #endif
@@ -233,9 +230,6 @@ int main() {
         case 7: printf(" * Console: Winchester (Impossible)\n"); break;
         default: printf(" * Console: Unknown\n"); break;
     }
-
-    printf(" * 2BL LDV: %d\n", cbldvcount);
-    printf(" * 6BL LDV: %d\n", fgldvcount);
 #endif
 
     LogDeInit();
