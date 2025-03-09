@@ -23,6 +23,7 @@ char *INDEX_HTML[] = {
     ".container {",
     "    margin: auto;",
     "    max-width: 800px;",
+    "    padding-bottom: 20px;",
     "}",
     ".box {",
     "    background-color: #111;",
@@ -49,6 +50,8 @@ char *INDEX_HTML[] = {
     "    border-radius: 5px;",
     "    transition: all 0.3s ease-in-out;",
     "    margin: 5px;",
+    "    width: 200px;",
+    "    display: inline-block;",
     "}",
     "button:hover {",
     "    background-color: #0FF;",
@@ -62,6 +65,10 @@ char *INDEX_HTML[] = {
     "}",
     "a:hover {",
     "    text-shadow: 0px 0px 10px #0FF;",
+    "}",
+    "@media (max-width: 600px) {",
+    "    .box { width: 95%; }",
+    "    button { width: 100%; }",
     "}",
     "</style>",
 
@@ -84,7 +91,8 @@ char *INDEX_HTML[] = {
 
     "<div class=\"box\">",
     "<h2>Fuses</h2>",
-    "<pre><b>Fuses:</b> <span id='fuse_info'>FUSE_INFO</span></pre>",
+    "<p><b>Fuses:</b></p>",
+    "<pre id='fuse_info'>FUSE_INFO</pre>",
     "</div>",
 
     "<div class=\"box\">",
