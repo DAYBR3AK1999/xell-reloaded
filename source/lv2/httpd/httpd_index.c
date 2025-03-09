@@ -59,11 +59,11 @@ const char* get_console_type() {
 void get_temperatures(char *buffer) {
     uint32_t cpu_temp, gpu_temp, edram_temp;
 
-    xenon_smc_ana_read(0, &cpu_temp);
-    xenon_smc_ana_read(1, &gpu_temp);
-    xenon_smc_ana_read(2, &edram_temp);
+    xenon_smc_read_temp(0, &cpu_temp);
+    xenon_smc_read_temp(1, &gpu_temp);
+    xenon_smc_read_temp(2, &edram_temp);
 
-    sprintf(buffer, "CPU: %d°C | GPU: %d°C | EDRAM: %d°C", cpu_temp, gpu_temp, edram_temp);
+    snprintf(buffer, 50, "CPU: %d°C | GPU: %d°C | EDRAM: %d°C", cpu_temp, gpu_temp, edram_temp);
 }
 
 /*
@@ -94,7 +94,8 @@ int response_index_process_request(struct http_state *http, const char *method, 
     strcpy(console_type, get_console_type());
     get_temperatures(temperature_info);
 
-    // Fetch Fuse Data
+    // Ensure get_fuse_data() is declared before use
+    extern void get_fuse_data(char *buffer);
     get_fuse_data(fuse_info);
 
     priv->hdr_state = 0;
@@ -150,26 +151,26 @@ int response_index_do_data(struct http_state *http) {
     char buffer[1024];
 
     for (i = priv->ptr; i < c; ++i) {
-        memset(buffer, '\0', sizeof(buffer));
+    memset(buffer, '\0', sizeof(buffer));
 
-        // Replace placeholders with actual values
-        if (strcmp((char *)INDEX_HTML[i], "CPU_KEY") == 0) {
-            sprintf(buffer, "%016llX%016llX", ld(&cpukey[0x0]), ld(&cpukey[0x8]));
+    // Replace placeholders with actual values
+    if (strcmp((char *)INDEX_HTML[i], "CPU_KEY") == 0) {
+            snprintf(buffer, sizeof(buffer), "%016llX%016llX", ld(&cpukey[0x0]), ld(&cpukey[0x8]));
         }
         else if (strcmp((char *)INDEX_HTML[i], "DVD_KEY") == 0) {
-            sprintf(buffer, "%016llX%016llX", ld(&dvdkey[0x0]), ld(&dvdkey[0x8]));
+            snprintf(buffer, sizeof(buffer), "%016llX%016llX", ld(&dvdkey[0x0]), ld(&dvdkey[0x8]));
         }
         else if (strcmp((char *)INDEX_HTML[i], "CONSOLE_TYPE") == 0) {
-            sprintf(buffer, "%s", console_type);
+            snprintf(buffer, sizeof(buffer), "%s", console_type);
         }
         else if (strcmp((char *)INDEX_HTML[i], "TEMP_INFO") == 0) {
-            sprintf(buffer, "%s", temperature_info);
+            snprintf(buffer, sizeof(buffer), "%s", temperature_info);
         }
-        else if (strcmp((char *)INDEX_HTML[i], "FUSE_INFO") == 0) {  // 🔥 Added this
-            sprintf(buffer, "%s", fuse_info);
+        else if (strcmp((char *)INDEX_HTML[i], "FUSE_INFO") == 0) {  // 🔥 Fixed this
+            snprintf(buffer, sizeof(buffer), "%s", fuse_info);
         }
         else {
-            sprintf(buffer, "%s", INDEX_HTML[i]);
+            snprintf(buffer, sizeof(buffer), "%s", INDEX_HTML[i]);
         }
 
         av -= (int) strlen(buffer);
