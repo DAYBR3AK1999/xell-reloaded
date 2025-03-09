@@ -61,9 +61,16 @@ int response_fuse_process_request(struct http_state *http, const char *method, c
 	struct response_fuse_priv_s *priv = http->response_priv;
 
 	priv->data = (char*)mem_malloc(MAX_FUSE_RESPONSE);
+	if (!priv->data) {
+    		mem_free(priv);
+    	return 0;
+	}
+		memset(priv->data, 0, MAX_FUSE_RESPONSE);
+
         
-        extern char FUSES[350];
-        fuse_strcat(priv->data,FUSES);
+        extern void get_fuse_data(char *buffer);
+	get_fuse_data(priv->data);
+
 /*	sprintf(priv->data, "Fuses dump\r\n");
 	for (i=0; i<12; ++i) {
 		memset(temp, '\0', sizeof(temp));
@@ -131,28 +138,27 @@ int response_fuse_do_header(struct http_state *http)
 	const char *t=0, *o=0;
 	char buf[80];
 	switch (priv->hdr_state)
-	{
-	case 0:
-		t = "Content-Type";
-		o = "text/plain; charset=US-ASCII";
-		break;
-	case 1:
-		t = "Content-Length";
-		sprintf(buf, "%d", priv->len);
-		o = buf;
-		break;
-	case 2:
-		t = "Content-Transfer-Encoding";
-		o = "7bit";
-		break;
-	case 3:
-		t = "Content-Disposition";
-		o = "attachment; filename=fuses.txt";
-		break;
-	case 4:
-		return httpd_do_std_header(http);
-	}
-
+{
+case 0:
+    t = "Content-Type";
+    o = "text/plain; charset=US-ASCII";
+    break;
+case 1:
+    t = "Content-Length";
+    snprintf(buf, sizeof(buf), "%d", priv->len); // ✅ Use snprintf for safety
+    o = buf;
+    break;
+case 2:
+    t = "Content-Transfer-Encoding";
+    o = "7bit";
+    break;
+case 3:
+    t = "Content-Disposition";
+    o = "attachment; filename=fuses.txt";
+    break;
+case 4:
+    return httpd_do_std_header(http);
+}
 
 	int av = httpd_available_sendbuffer(http);
 	if (av < (strlen(t) + strlen(o) + 4))
@@ -178,8 +184,9 @@ int response_fuse_do_data(struct http_state *http)
 		return 1;
 	}
 
-	if (av > (priv->len - priv->ptr))
-		av = priv->len - priv->ptr;
+	if (av > priv->togo) // ✅ Ensure we never send more than `togo`
+    av = priv->togo;
+
 
 	while (av)
 	{
@@ -205,9 +212,13 @@ int response_fuse_do_data(struct http_state *http)
 
 void response_fuse_finish(struct http_state *http)
 {
-	struct response_fuse_priv_s *priv = http->response_priv;
-	mem_free(priv->data);
-	mem_free(priv);
+    if (!http || !http->response_priv) return;
+
+    struct response_fuse_priv_s *priv = http->response_priv;
+    if (priv->data) {
+        mem_free(priv->data);
+    }
+    mem_free(priv);
 }
 
 void get_fuse_data(char *buffer) {
@@ -220,20 +231,20 @@ void get_fuse_data(char *buffer) {
     }
 
     // Safely format fuse data
-    snprintf(buffer, 256,  // ✅ Use snprintf to prevent buffer overflow
-        "Fuse Lines:\n"
-        "L00: %016llX\n"
-        "L01: %016llX\n"
-        "L02: %016llX\n"
-        "L03: %016llX\n"
-        "L04: %016llX\n"
-        "L05: %016llX\n"
-        "L06: %016llX\n"
-        "L07: %016llX\n"
-        "L08: %016llX\n"
-        "L09: %016llX\n"
-        "L10: %016llX\n"
-        "L11: %016llX\n",
-        fuses[0], fuses[1], fuses[2], fuses[3], fuses[4], fuses[5],
-        fuses[6], fuses[7], fuses[8], fuses[9], fuses[10], fuses[11]);
+snprintf(buffer, MAX_FUSE_RESPONSE,  // ✅ Ensure buffer is large enough
+    "Fuse Lines:\n"
+    "L00: %016llX\n"
+    "L01: %016llX\n"
+    "L02: %016llX\n"
+    "L03: %016llX\n"
+    "L04: %016llX\n"
+    "L05: %016llX\n"
+    "L06: %016llX\n"
+    "L07: %016llX\n"
+    "L08: %016llX\n"
+    "L09: %016llX\n"
+    "L10: %016llX\n"
+    "L11: %016llX\n",
+    fuses[0], fuses[1], fuses[2], fuses[3], fuses[4], fuses[5],
+    fuses[6], fuses[7], fuses[8], fuses[9], fuses[10], fuses[11]);
 }
