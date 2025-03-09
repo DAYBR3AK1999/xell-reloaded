@@ -27,7 +27,6 @@ extern void console_clrline();
 
 #define hdprintf(x...)
 // fprintf(stderr, x)
-
 /* do_* 0: "i'm done, go to next state", 1: "i'm waiting for more sendbuffer space, poll me again", 2: "poll me again NOW!" */
 
 static void httpd_handle_server(struct http_state *http);
