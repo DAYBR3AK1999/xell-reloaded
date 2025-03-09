@@ -23,9 +23,8 @@
 unsigned char cpukey[0x10];
 unsigned char dvdkey[0x10];
 
-// Store Console Type and Temperatures
+// Store Console Type
 char console_type[20];
-char temperature_info[50];
 char fuse_info[256];  // Buffer to store fuse data
 
 struct response_mem_priv_s {
@@ -54,19 +53,6 @@ const char* get_console_type() {
 }
 
 /*
- * Retrieve Console Temperatures (CPU, GPU, EDRAM)
- */
-void get_temperatures(char *buffer) {
-    uint32_t cpu_temp, gpu_temp, edram_temp;
-
-    xenon_smc_read_temp(0, &cpu_temp);
-    xenon_smc_read_temp(1, &gpu_temp);
-    xenon_smc_read_temp(2, &edram_temp);
-
-    snprintf(buffer, 50, "CPU: %d°C | GPU: %d°C | EDRAM: %d°C", cpu_temp, gpu_temp, edram_temp);
-}
-
-/*
  * Process HTTP Request
  */
 int response_index_process_request(struct http_state *http, const char *method, const char *url) {
@@ -90,9 +76,8 @@ int response_index_process_request(struct http_state *http, const char *method, 
     memset(dvdkey, 0x00, 0x10);
     kv_get_dvd_key(dvdkey);
 
-    // Fetch Console Type & Temperatures
+    // Fetch Console Type
     strcpy(console_type, get_console_type());
-    get_temperatures(temperature_info);
 
     // Ensure get_fuse_data() is declared before use
     extern void get_fuse_data(char *buffer);
@@ -162,9 +147,6 @@ int response_index_do_data(struct http_state *http) {
         }
         else if (strcmp((char *)INDEX_HTML[i], "CONSOLE_TYPE") == 0) {
             snprintf(buffer, sizeof(buffer), "%s", console_type);
-        }
-        else if (strcmp((char *)INDEX_HTML[i], "TEMP_INFO") == 0) {
-            snprintf(buffer, sizeof(buffer), "%s", temperature_info);
         }
         else if (strcmp((char *)INDEX_HTML[i], "FUSE_INFO") == 0) {  // 🔥 Fixed this
             snprintf(buffer, sizeof(buffer), "%s", fuse_info);
