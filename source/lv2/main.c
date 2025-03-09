@@ -191,7 +191,11 @@ int main() {
     console_clrscr();
 
     network_print_config(); // ✅ Always display IP address
+    for (;;) {
+    console_clrscr();
     print_uptime();
+    delay(1000);  // Refresh every second
+}
 
 #ifndef NO_PRINT_CONFIG
     printf("\n====================\n");
