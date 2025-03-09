@@ -25,7 +25,7 @@ unsigned char dvdkey[0x10];
 
 // Store Console Type
 char console_type[20];
-char fuse_info[256];  // Buffer to store fuse data
+char fuse_info[512];  // Increased buffer size for safety
 
 struct response_mem_priv_s {
     void *base;
@@ -56,7 +56,7 @@ const char* get_console_type() {
  * Process HTTP Request
  */
 int response_index_process_request(struct http_state *http, const char *method, const char *url) {
-    if (strcmp(method, "GET"))
+    if (strcmp(method, "GET") != 0)
         return 0;
 
     if (strcmp(url, "/index.html") != 0 && strcmp(url, "/default.html") != 0 &&
@@ -69,17 +69,19 @@ int response_index_process_request(struct http_state *http, const char *method, 
         return 0;
 
     struct response_mem_priv_s *priv = http->response_priv;
-    
+
     // Fetch CPU & DVD Keys
-    memset(cpukey, 0x00, 0x10);
+    memset(cpukey, 0x00, sizeof(cpukey));
     cpu_get_key(cpukey);
-    memset(dvdkey, 0x00, 0x10);
+    
+    memset(dvdkey, 0x00, sizeof(dvdkey));
     kv_get_dvd_key(dvdkey);
 
     // Fetch Console Type
-    strcpy(console_type, get_console_type());
+    strncpy(console_type, get_console_type(), sizeof(console_type) - 1);
+    console_type[sizeof(console_type) - 1] = '\0'; // Ensure null termination
 
-    // Ensure get_fuse_data() is declared before use
+    // Fetch Fuse Data
     extern void get_fuse_data(char *buffer);
     get_fuse_data(fuse_info);
 
@@ -96,7 +98,7 @@ int response_index_process_request(struct http_state *http, const char *method, 
 int response_index_do_header(struct http_state *http) {
     struct response_mem_priv_s *priv = http->response_priv;
 
-    const char *t = 0, *o = 0;
+    const char *t = NULL, *o = NULL;
     switch (priv->hdr_state) {
         case 0:
             t = "Content-Type";
@@ -136,19 +138,19 @@ int response_index_do_data(struct http_state *http) {
     char buffer[1024];
 
     for (i = priv->ptr; i < c; ++i) {
-    memset(buffer, '\0', sizeof(buffer));
+        memset(buffer, '\0', sizeof(buffer));
 
-    // Replace placeholders with actual values
-    if (strcmp((char *)INDEX_HTML[i], "CPU_KEY") == 0) {
+        // Replace placeholders with actual values
+        if (strcmp(INDEX_HTML[i], "CPU_KEY") == 0) {
             snprintf(buffer, sizeof(buffer), "%016llX%016llX", ld(&cpukey[0x0]), ld(&cpukey[0x8]));
         }
-        else if (strcmp((char *)INDEX_HTML[i], "DVD_KEY") == 0) {
+        else if (strcmp(INDEX_HTML[i], "DVD_KEY") == 0) {
             snprintf(buffer, sizeof(buffer), "%016llX%016llX", ld(&dvdkey[0x0]), ld(&dvdkey[0x8]));
         }
-        else if (strcmp((char *)INDEX_HTML[i], "CONSOLE_TYPE") == 0) {
+        else if (strcmp(INDEX_HTML[i], "CONSOLE_TYPE") == 0) {
             snprintf(buffer, sizeof(buffer), "%s", console_type);
         }
-        else if (strcmp((char *)INDEX_HTML[i], "FUSE_INFO") == 0) {  // 🔥 Fixed this
+        else if (strcmp(INDEX_HTML[i], "FUSE_INFO") == 0) {
             snprintf(buffer, sizeof(buffer), "%s", fuse_info);
         }
         else {
@@ -170,5 +172,7 @@ int response_index_do_data(struct http_state *http) {
  */
 void response_index_finish(struct http_state *http) {
     struct response_mem_priv_s *priv = http->response_priv;
-    mem_free(priv);
+    if (priv) {
+        mem_free(priv);
+    }
 }
