@@ -18,6 +18,5 @@ void response_index_finish(struct http_state *http);
 
 // Console information functions
 const char *get_console_type();
-void get_temperatures(char *buffer);
 
 #endif /* HTTPD_INDEX_H_ */
