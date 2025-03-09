@@ -74,7 +74,6 @@ char *INDEX_HTML[] = {
     "<div class=\"box\">",
     "<h2>Console Information</h2>",
     "<p><b>Console Type:</b> <span id='console_type'>CONSOLE_TYPE</span></p>",
-    "<p><b>Temperature:</b> <span id='temp_info'>TEMP_INFO</span></p>",
     "</div>",
 
     "<div class=\"box\">",
