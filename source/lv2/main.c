@@ -55,21 +55,6 @@ void dumpana() {
     }
 }
 
-void print_temperatures() {
-    uint32_t cpu_temp, gpu_temp, edram_temp;
-
-    xenon_smc_read_temp(0, &cpu_temp);
-    xenon_smc_read_temp(1, &gpu_temp);
-    xenon_smc_read_temp(2, &edram_temp);
-
-    printf("\n====================\n");
-    printf(" * Console Temperatures:\n");
-    printf("   - CPU:   %d°C\n", cpu_temp);
-    printf("   - GPU:   %d°C\n", gpu_temp);
-    printf("   - EDRAM: %d°C\n", edram_temp);
-    printf("====================\n");
-}
-
 void print_uptime() {
     uint64_t tb = mftb(); 
     uint64_t seconds = tb / 50000000; 
@@ -209,7 +194,6 @@ int main() {
     console_clrscr();
 
     network_print_config(); // ✅ Always display IP address
-    print_temperatures();
     print_uptime();
 
 #ifndef NO_PRINT_CONFIG
