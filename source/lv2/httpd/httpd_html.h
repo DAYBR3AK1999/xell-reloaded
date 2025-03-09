@@ -112,7 +112,6 @@ char *INDEX_HTML[] = {
     "<button onclick=\"window.location.href='/KV'\">Download KV</button>",
     "<button onclick=\"window.location.href='/FUSE'\">Download Fuses</button>",
     "<button onclick=\"window.location.href='/LOG'\">Download XeLL Logs</button>",
-    "<button onclick=\"window.location.href='/NAND'\">Download NAND Backup</button>",
     "</div>",
 
     "<div class=\"box\">",
