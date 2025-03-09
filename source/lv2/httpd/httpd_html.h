@@ -72,6 +72,16 @@ char *INDEX_HTML[] = {
     "}",
     "</style>",
 
+    "<script>",
+"function updateUptime() {",
+"    fetch('/uptime').then(response => response.text()).then(data => {",
+"        document.getElementById('uptime').innerText = data;",
+"    });",
+"    setTimeout(updateUptime, 1000);",
+"}",
+"window.onload = updateUptime;",
+"</script>",
+
     "</head><body>",
     "<div class=\"container\">",
     "<h1>XeLL Reloaded - HexaMods</h1>",
@@ -80,6 +90,7 @@ char *INDEX_HTML[] = {
 
     "<div class=\"box\">",
     "<h2>Console Information</h2>",
+    "<p><b>System Uptime:</b> <span id='uptime'>LOADING...</span></p>",
     "<p><b>Console Type:</b> <span id='console_type'>CONSOLE_TYPE</span></p>",
     "</div>",
 
